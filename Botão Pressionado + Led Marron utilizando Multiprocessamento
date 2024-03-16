@@ -1,0 +1,91 @@
+// Inclusão das bibliotecas necessárias
+#include <Arduino.h>
+#include <WiFi.h>
+#include <WebServer.h>
+#include <StreamString.h>
+#include <UniversalTelegramBot.h>
+#include <WiFiClientSecure.h>
+
+// Definição dos pinos e variáveis globais
+#define PINO_BOTAO 4
+#define LED_R 25
+#define LED_G 26
+#define LED_B 27
+IPAddress dns(8, 8, 8, 8); // Servidor DNS do Google
+const char* ssid = "POCO X3 GT";
+const char* password = "pocox3gt";
+const char* token = "TOKEN_DO_TELEGRAM";
+
+// Instância dos objetos para o bot do Telegram e cliente seguro
+WiFiClientSecure client;
+UniversalTelegramBot bot(token, client);
+
+// Protótipos das funções utilizadas
+void botao();
+void ligar_led(int r, int g, int b);
+void telegram();
+void task_botao(void *parameter);
+int conver_to_esp(int value);
+
+// Configuração inicial do microcontrolador
+void setup() {
+  // Configuração dos pinos como saída ou entrada
+  pinMode(LED_R, OUTPUT);
+  pinMode(LED_G, OUTPUT);
+  pinMode(LED_B, OUTPUT);
+  pinMode(PINO_BOTAO, INPUT_PULLDOWN);
+  
+  // Inicialização da comunicação serial
+  Serial.begin(115200);
+  
+  // Criação da task para o botão
+  xTaskCreate(task_botao, "Botao", 10000, NULL, 1, NULL);
+  
+  // Conexão à rede WiFi
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+  }
+  Serial.println("Conectado ao WiFi");
+}
+
+// Loop principal vazio - a lógica está na task do botão
+void loop() {}
+
+// Definições das funções
+void task_botao(void *parameter) {
+  while (true) {
+    botao();
+    delay(100);
+  }
+}
+
+void botao() {
+  int estadoBotao = digitalRead(PINO_BOTAO);
+  if (estadoBotao == HIGH) {
+    ligar_led(255, 0, 255);
+    telegram();
+  } else {
+    ligar_led(0, 0, 0);
+  }
+}
+
+void ligar_led(int r, int g, int b) {
+  digitalWrite(LED_R, conver_to_esp(r));
+  digitalWrite(LED_G, conver_to_esp(g));
+  digitalWrite(LED_B, conver_to_esp(b));
+}
+
+int conver_to_esp(int value) {
+  return (int)((value * 1823) / 255);
+}
+
+void telegram() {
+  String chat_id = "ID_DO_CHAT";
+  String text = "Botão pressionado no ESP32";
+  if (bot.sendMessage(chat_id, text, "")) {
+    Serial.println("Mensagem enviada com sucesso!");
+  } else {
+    Serial.println("Falha ao enviar mensagem!");
+  }
+}
