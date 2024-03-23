@@ -1,0 +1,35 @@
+#include <Arduino.h> // Inclui a biblioteca principal do Arduino
+
+// Define os pinos RX e TX para o módulo RFID
+#define RFID_RX_PIN 4 // Pino RX (verde)
+#define RFID_TX_PIN 5 // Pino TX (amarelo)
+
+void setup() {
+  Serial.begin(9600); // Inicia a comunicação serial com o computador
+  // Inicia a comunicação serial com o módulo RFID
+  Serial1.begin(9600, SERIAL_8N1, RFID_RX_PIN, RFID_TX_PIN);
+}
+
+void loop() {
+  Serial.println("aguardando"); // Imprime no monitor serial que está aguardando por um cartão
+  delay(1000); // Espera por 1 segundo
+
+  // Verifica se há dados disponíveis para leitura na porta serial
+  if (Serial1.available()) {
+    String tagId = ""; // Cria uma string para armazenar o ID do cartão
+
+    // Enquanto houver dados disponíveis, lê um caractere por vez
+    while (Serial1.available()) {
+      delay(10); // Pequeno atraso para garantir a leitura completa dos dados
+
+      char c = Serial1.read(); // Lê um caractere da porta serial
+      if (c == '\n') { // Se for o caractere de nova linha, encerra a leitura
+        break;
+      }
+      tagId += c; // Adiciona o caractere lido à string do ID do cartão
+    }
+
+    Serial.print("Tag ID: "); // Imprime a etiqueta "Tag ID:"
+    Serial.println(tagId); // Imprime o ID do cartão no monitor serial
+  }
+}
