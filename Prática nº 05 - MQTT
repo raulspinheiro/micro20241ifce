@@ -11,6 +11,17 @@ const char* mqtt_server = "https://testclient-cloud.mqtt.cool/"; // Endereço do
 WiFiClient espClient; // Cria um cliente Wi-Fi
 PubSubClient client(espClient); // Cria um cliente MQTT e passa o cliente Wi-Fi
 
+const int ledPin = 16; // Define o pino do LED 
+
+void blinkLed() {
+  for (int i = 0; i < 3; i++) {
+    digitalWrite(ledPin, HIGH); // Acende o LED
+    delay(500); // Espera meio segundo
+    digitalWrite(ledPin, LOW); // Apaga o LED
+    delay(500); // Espera meio segundo
+  }
+}
+
 void setup_wifi() {
   delay(10);
   // Inicia a conexão com a rede Wi-Fi
@@ -38,6 +49,7 @@ void reconnect() {
     // Tenta conectar ao servidor MQTT
     if (client.connect("ESP32Client")) { // Utiliza um ID de cliente único para a conexão
       Serial.println("conectado");
+      blinkLed(); // Pisca o LED quando conecta ao broker MQTT
       // Se inscreve em um tópico após a conexão bem-sucedida
       client.subscribe("topico_de_exemplo");
     } else {
@@ -51,6 +63,7 @@ void reconnect() {
 }
 
 void setup() {
+  pinMode(ledPin, OUTPUT); // Configura o pino do LED como saída
   Serial.begin(115200); // Inicia a comunicação serial com a taxa de 115200 bps
   setup_wifi(); // Chama a função para conectar ao Wi-Fi
   client.setServer(mqtt_server, 1883); // Configura o servidor MQTT e a porta
@@ -58,6 +71,7 @@ void setup() {
 }
 
 void callback(char* topic, byte* message, unsigned int length) {
+  blinkLed(); // Pisca o LED quando recebe uma mensagem
   // Função chamada sempre que uma mensagem é recebida no tópico subscrito
   Serial.print("Mensagem recebida no tópico: ");
   Serial.print(topic);
