@@ -6,7 +6,7 @@ const char* ssid = "POCO X3 GT"; // Nome da rede Wi-Fi
 const char* password = "pocox3gt"; // Senha da rede Wi-Fi
 
 // Substitua pelo endereço IP do seu broker MQTT
-const char* mqtt_server = "https://testclient-cloud.mqtt.cool/"; // Endereço do servidor MQTT
+const char* mqtt_server = "tcp://broker.mqtt.cool:1883"; // Endereço do servidor MQTT
 
 WiFiClient espClient; // Cria um cliente Wi-Fi
 PubSubClient client(espClient); // Cria um cliente MQTT e passa o cliente Wi-Fi
