@@ -1,0 +1,76 @@
+#include <WiFi.h> // Inclui a biblioteca WiFi para conectar o ESP32 à rede
+#include <PubSubClient.h> // Inclui a biblioteca PubSubClient para o protocolo MQTT
+
+// Dados de rede
+const char* ssid = "POCO X3 GT"; // Nome da rede Wi-Fi
+const char* password = "pocox3gt"; // Senha da rede Wi-Fi
+
+// Substitua pelo endereço IP do seu broker MQTT
+const char* mqtt_server = "https://testclient-cloud.mqtt.cool/"; // Endereço do servidor MQTT
+
+WiFiClient espClient; // Cria um cliente Wi-Fi
+PubSubClient client(espClient); // Cria um cliente MQTT e passa o cliente Wi-Fi
+
+void setup_wifi() {
+  delay(10);
+  // Inicia a conexão com a rede Wi-Fi
+  Serial.println();
+  Serial.print("Conectando a ");
+  Serial.println(ssid);
+
+  WiFi.begin(ssid, password); // Conecta ao Wi-Fi com o SSID e senha fornecidos
+
+  while (WiFi.status() != WL_CONNECTED) { // Aguarda até que a conexão seja estabelecida
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println("");
+  Serial.println("WiFi conectado"); // Informa que a conexão Wi-Fi foi bem-sucedida
+  Serial.println("Endereço IP: ");
+  Serial.println(WiFi.localIP()); // Exibe o endereço IP atribuído ao ESP32
+}
+
+void reconnect() {
+  // Tenta reconectar ao broker MQTT se a conexão for perdida
+  while (!client.connected()) {
+    Serial.print("Tentando conexão MQTT...");
+    // Tenta conectar ao servidor MQTT
+    if (client.connect("ESP32Client")) { // Utiliza um ID de cliente único para a conexão
+      Serial.println("conectado");
+      // Se inscreve em um tópico após a conexão bem-sucedida
+      client.subscribe("topico_de_exemplo");
+    } else {
+      Serial.print("falhou, rc=");
+      Serial.print(client.state());
+      Serial.println(" tentando novamente em 5 segundos");
+      // Espera 5 segundos antes de tentar novamente
+      delay(5000);
+    }
+  }
+}
+
+void setup() {
+  Serial.begin(115200); // Inicia a comunicação serial com a taxa de 115200 bps
+  setup_wifi(); // Chama a função para conectar ao Wi-Fi
+  client.setServer(mqtt_server, 1883); // Configura o servidor MQTT e a porta
+  client.setCallback(callback); // Define a função de callback para quando receber mensagens
+}
+
+void callback(char* topic, byte* message, unsigned int length) {
+  // Função chamada sempre que uma mensagem é recebida no tópico subscrito
+  Serial.print("Mensagem recebida no tópico: ");
+  Serial.print(topic);
+  Serial.print(". Mensagem:");
+  for (int i = 0; i < length; i++) { // Itera sobre cada byte da mensagem
+    Serial.print((char)message[i]); // Converte cada byte em char e imprime
+  }
+  Serial.println();
+}
+
+void loop() {
+  if (!client.connected()) { // Verifica se o cliente está desconectado
+    reconnect(); // Se estiver desconectado, tenta reconectar
+  }
+  client.loop(); // Mantém a conexão com o servidor MQTT e processa as mensagens
+}
